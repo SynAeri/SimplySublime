@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# For bspwm - listen to workspace changes
+
+if command -v bspc &>/dev/null; then
+    bspc subscribe desktop_focus | while read -r _; do
+        bspc query -D -d focused --names | head -c 1
+    done
+fi

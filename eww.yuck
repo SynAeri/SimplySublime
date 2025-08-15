@@ -1,0 +1,172 @@
+;; VARS
+
+;; WORKSPACE VARS
+(deflisten workspaces_listen "bash ~/.config/eww/scripts/get-workspaces")
+(defpoll current_workspace :interval "0.01s"  "bash ~/.config/eww/scripts/get-active-workspace")
+
+;; TIME VARS
+(defpoll time :interval "10s"
+  "date '+%a %d %b  %H:%M'")
+
+;; VOLUME VARS
+(defpoll volume :interval "0.05s" :initial "50"
+  "./scripts/getvol")
+
+;; BATTERY VARS
+(defpoll battery :interval "30s" :initial "100"
+  "./scripts/getbat")
+;; WIFI VARS
+(defpoll wifi_name :interval "30s"
+  "nmcli -t -f NAME connection show --active | head -n1 || echo 'Disconnected'")
+
+
+;; Main Bar
+(defwidget bar []
+  (box :class "bar-container"
+    (centerbox :orientation "h" :class "bar-content"
+      (left)
+      (center)
+      (right))))
+
+;; LEFT SECTION
+(defwidget left []
+  (box :class "left-modules" 
+       :orientation "h" 
+       :space-evenly false 
+       :halign "start"
+       :spacing 12
+    (button :class "mainMenu" 
+            :onclick "alacritty --hold -e fastfetch &" 
+            "󱎂")  ;; LOGO
+    (workspaces)
+    (Agenda)
+  ))
+
+;; Center Section - Currently focused app or music (WIP)
+(defwidget center []
+  (box :class "center-modules" 
+       :orientation "h" 
+       :space-evenly false 
+       :halign "center"
+))
+
+;; Right Section - System tray items
+(defwidget right []
+  (box :class "right-modules" 
+       :orientation "h" 
+       :space-evenly false 
+       :halign "end"
+       :spacing 8
+    (wifi)
+    (audio)
+    (battery_widget)
+    (systray_C)
+    (clock)))
+
+
+
+;; WIDGETS
+
+;; Battery Widget with slide reveal for percentage
+(defwidget battery_widget []
+  (eventbox :onhover "${EWW_CMD} update battery_reveal=true"
+            :onhoverlost "${EWW_CMD} update battery_reveal=false"
+    (box :class "battery-module"
+         :orientation "h"
+         :space-evenly false
+         :spacing 1
+      (label :class "battery-icon"
+             :text {battery > 80 ? "󰁹" : battery > 60 ? "󰂁" : battery > 40 ? "󰁿" : battery > 20 ? "󰁽" : "󰁺"})
+      (revealer :transition "slideleft"
+                :reveal battery_reveal
+                :duration "350ms"
+        (label :class "battery-label"
+               :text "${battery}%")))))
+
+(defvar battery_reveal false)
+
+;; Audio Widget with working slider
+(defwidget audio []
+  (eventbox :onhover "${EWW_CMD} update audio_reveal=true"
+            :onhoverlost "${EWW_CMD} update audio_reveal=false"
+    (box :orientation "h" 
+         :space-evenly false
+
+         :class "audio-module"
+      (button :onclick "pavucontrol &"
+              :class "audio-icon"
+        {volume > 66 ? "󰕾" : volume > 33 ? "󰖀" : volume > 0 ? "󰕿" : "󰝟"})
+      (revealer :transition "slideleft"
+                :reveal audio_reveal
+                :duration "500ms"
+        (box :class "volume-box"
+          (scale :class "volume-slider"
+                 :value volume
+                 :orientation "h"
+                 :max 100
+                 :min 0
+                 :width 50
+                 :onchange "pactl set-sink-volume @DEFAULT_SINK@ {}%"))))))
+
+(defvar audio_reveal false)
+
+;; WiFi Widget
+(defwidget wifi []
+  (button :class "wifi-module"
+          :onclick "alacritty --hold -e nmcli dev wifi &"
+          :tooltip wifi_name
+    "󰖩 "))
+
+;; System Tray
+(defwidget systray_C []
+  (button :class "systray-module"
+          :onclick "firefox 'https://claude.ai/chat/' &" 
+    "󰾙 "))
+
+;; Clock Widget
+(defwidget clock []
+  (button :class "clock-module"
+          :onclick "~/.config/eww/scripts/toggle-calendar"
+    time))
+
+;; Workspace Widget - Fixed version I think
+(defwidget workspaces []
+  (box :class "workspaces"
+       :orientation "h"
+       :space-evenly false
+       :spacing 3
+    (button :class {current_workspace == "I" || current_workspace == "1" ? "workspace-active" : "workspace-inactive"}
+            :onclick "bspc desktop -f I"
+            "") 
+    (button :class {current_workspace == "II" || current_workspace == "2" ? "workspace-active" : "workspace-inactive"}
+            :onclick "bspc desktop -f II"
+            "")
+    (button :class {current_workspace == "III" || current_workspace == "3" ? "workspace-active" : "workspace-inactive"}
+            :onclick "bspc desktop -f III"
+            "")
+    (button :class {current_workspace == "IV" || current_workspace == "4" ? "workspace-active" : "workspace-inactive"}
+            :onclick "bspc desktop -f IV"
+            "")
+    (button :class {current_workspace == "V" || current_workspace == "5" ? "workspace-active" : "workspace-inactive"}
+            :onclick "bspc desktop -f V"
+            "")
+  ))
+
+(defwidget Agenda []
+
+  (box :class "workspaces"
+       :orientation "h"
+       :space-evenly false
+       :spacing 3
+))
+
+(defwindow bar
+  :monitor 0
+  :windowtype "dock"
+  :geometry (geometry :x "0%"
+                      :y "0%"
+                      :width "100%"
+                      :height "10px"
+                      :anchor "top center")
+  :reserve (struts :side "top" :distance "3%")
+  (bar))

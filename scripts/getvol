@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# Only checks this case will let it check other cases later
+#
+pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null | awk '/Volume:/ {print $5}' | tr -d '%' | head -1 || echo "50"

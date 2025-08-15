@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Accounts for diff configs.
+
+if command -v bspc &>/dev/null; then
+    bspc query -D -d focused --names
+
+elif command -v i3-msg &>/dev/null; then
+    i3-msg -t get_workspaces | jq -r '.[] | select(.focused==true).name'
+
+elif command -v hyprctl &>/dev/null; then
+    hyprctl monitors -j | jq -r '.[] | .activeWorkspace.name'
+else
+    echo "I"
+fi

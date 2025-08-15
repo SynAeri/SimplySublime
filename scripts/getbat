@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# Try to get battery level
+if [ -d /sys/class/power_supply/ ]; then
+    for bat in /sys/class/power_supply/BAT*; do
+        if [ -f "$bat/capacity" ]; then
+            cat "$bat/capacity"
+            exit 0
+        fi
+    done
+fi
+
+# Default if no battery found (probably desktop)
+echo "100"
